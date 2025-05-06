@@ -136,7 +136,7 @@ handleEvent _ _ model evt = case evt of
                                                    Left _ -> []
                                                    Right _ -> parseResult exprs
                     (_, br1, br2) = model ^. task
-  AppRun -> [Model $ model & interprete .~ True & input .~ "" & newTask .~ False]
+  AppRun -> [Model $ model & interprete .~ True & input .~ "" & newTask .~ False & result .~ ""]
   AppEval -> [Model $ model & result .~ pack res]
              where parsed = parseInput (unpack $ model ^. input)
                    res = case parsed of
