@@ -15,6 +15,8 @@ import Types (SExpr(Atom, IntNum, FloatNum, Str, Nil, Pair, None),
 import Data.Char (toUpper)
 import GHC.Float (int2Double)
 import GHC.ResponseFile (escapeArgs)
+--import Debug.Trace (trace)
+import Control.Lens (from)
 
 -- working with the stack of functions
 
@@ -32,6 +34,7 @@ initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseC
                                 ("<", (Eval.<)), (">", (Eval.>)),
                                 ("<=", (Eval.<=)), (">=", (Eval.>=)),
                                 ("defun", defun), ("setq", setq),
+                                ("funcall", funcall),
                                 ("print", Eval.print)]
 
 addVars::[String]->FStack->FStack
@@ -291,6 +294,18 @@ allAtoms::[SExpr]->Bool
 allAtoms [] = True
 allAtoms ((Atom _) : es) = allAtoms es
 allAtoms _ = False
+
+funcall::FStack->[SExpr]->Either Error (FStack, SExpr)
+funcall stack (f:es) | allAtoms [f] 
+                       && isUser (atomToString f) stack  = applyUser stack (fst user) (snd user) es
+                     | allAtoms [f] 
+                       && isBase (atomToString f) stack = applyBase stack base es
+                     | allAtoms [f] = Left (Error "No such function!")
+                     | otherwise = evalExpr stack (foldr (\x y -> takeSExpr (cons stack [x, y])) Nil (f:es))
+                     where user = getUser (atomToString f) stack
+                           base = getBase (atomToString f) stack
+funcall _ _ = Left (Error "Incorrect parameters!")
+                           
 
 
 car::FStack->[SExpr]->Either Error (FStack, SExpr)
