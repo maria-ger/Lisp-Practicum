@@ -513,10 +513,10 @@ member _ _ = Left (Error "MEMBER takes two parameters!")
 
 
 list::FStack->[SExpr]->Either Error (FStack, SExpr)
-list stack [x, y] | correct res = cons stack [x, takeSExpr res]
-                  | otherwise = Left (Error "Incorrect second parameter!")
-                  where res = cons stack [y, Nil]
-list _ _ = Left (Error "LIST takes two parameters!")
+list stack [] = Right (stack, Nil)
+list stack (e:es) | correct res = cons stack [e, takeSExpr res]
+                  | otherwise = Left (Error "Incorrect parameter!")
+                  where res = list stack es
 
 
 append::FStack->[SExpr]->Either Error (FStack, SExpr)
