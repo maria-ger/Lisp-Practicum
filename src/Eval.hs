@@ -34,7 +34,7 @@ initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseC
                                 ("<", (Eval.<)), (">", (Eval.>)),
                                 ("<=", (Eval.<=)), (">=", (Eval.>=)),
                                 ("defun", defun), ("setq", setq),
-                                ("funcall", funcall),
+                                ("apply", apply), ("funcall", funcall),
                                 ("print", Eval.print)]
 
 addVars::[String]->FStack->FStack
@@ -294,6 +294,12 @@ allAtoms::[SExpr]->Bool
 allAtoms [] = True
 allAtoms ((Atom _) : es) = allAtoms es
 allAtoms _ = False
+
+apply::FStack->[SExpr]->Either Error (FStack, SExpr)
+apply stack [f, Nil] = evalExpr stack (takeSExpr (cons stack [f, Nil]))
+apply stack [f, Pair (x, xs)] = evalExpr stack (takeSExpr (cons stack [f, Pair (x, xs)]))
+apply _ [_, _] = Left (Error "Second parameter must be a list!")
+apply _ _ = Left (Error "APPLY takes two parameters!")
 
 funcall::FStack->[SExpr]->Either Error (FStack, SExpr)
 funcall stack (f:es) | allAtoms [f] 
