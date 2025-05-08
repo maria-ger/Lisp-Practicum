@@ -103,6 +103,7 @@ getName (UserVar (name, _)) = name
 evalExprs::FStack->[SExpr]->[SExpr]->Either Error [SExpr]
 evalExprs _ results [] = Right results
 evalExprs stack cur (e:es) | correct res = evalExprs (fst r) (cur ++ [snd r]) es
+                           | cur /= [] = Right (cur ++ [Str ((\(Error x) -> x) err)])
                            | otherwise = Left err
                              where res = evalExpr stack e
                                    r = case res of
