@@ -35,7 +35,7 @@ initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseC
                                 ("<=", (Eval.<=)), (">=", (Eval.>=)),
                                 ("defun", defun), ("setq", setq),
                                 ("apply", apply), ("funcall", funcall),
-                                ("mapcar", mapcar),
+                                ("mapcar", mapcar), ("maplist", maplist),
                                 ("print", Eval.print)]
 
 addVars::[String]->FStack->FStack
@@ -327,6 +327,16 @@ mapcar stack [f, Pair (e, es)] | correct res && correct results = cons stack [ta
                                        results = mapcar stack [f, es]
 mapcar _ [_, _] = Left (Error "Second parameter must be a list!")
 mapcar _ _ = Left (Error "MAPCAR takes two parameters!")
+
+maplist::FStack->[SExpr]->Either Error (FStack, SExpr)
+maplist stack [_, Nil] = Right (stack, Nil)
+maplist stack [f, Pair (e, es)] | correct res && correct results = cons stack [takeSExpr res, takeSExpr results]
+                         | otherwise = Left (Error "Incorrect parameters!")
+                         where res = funcall stack [f, Pair (e, es)]
+                               results = maplist stack [f, es]
+maplist _ [_, _] = Left (Error "Second parameter must be a list!")
+maplist _ _ = Left (Error "MAPLIST takes two parameters!")
+
                                                              
 
 car::FStack->[SExpr]->Either Error (FStack, SExpr)
