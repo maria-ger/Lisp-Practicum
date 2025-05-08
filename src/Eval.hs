@@ -36,6 +36,7 @@ initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseC
                                 ("defun", defun), ("setq", setq),
                                 ("apply", apply), ("funcall", funcall),
                                 ("mapcar", mapcar), ("maplist", maplist),
+                                ("reduce", reduce),
                                 ("print", Eval.print)]
 
 addVars::[String]->FStack->FStack
@@ -296,12 +297,6 @@ allAtoms [] = True
 allAtoms ((Atom _) : es) = allAtoms es
 allAtoms _ = False
 
-apply::FStack->[SExpr]->Either Error (FStack, SExpr)
-apply stack [f, Nil] = evalExpr stack (takeSExpr (cons stack [f, Nil]))
-apply stack [f, Pair (e, es)] = funcall stack (f:params)
-                                where params = funcParams (Pair (e, es))
-apply _ [_, _] = Left (Error "Second parameter must be a list!")
-apply _ _ = Left (Error "APPLY takes two parameters!")
 
 funcall::FStack->[SExpr]->Either Error (FStack, SExpr)
 funcall stack (f:es) | allAtoms [f] 
@@ -318,6 +313,13 @@ funcall stack (f:es) | allAtoms [f]
                      where user = getUser (atomToString f) stack
                            base = getBase (atomToString f) stack
 funcall _ _ = Left (Error "Incorrect parameters!")
+
+apply::FStack->[SExpr]->Either Error (FStack, SExpr)
+apply stack [f, Nil] = evalExpr stack (takeSExpr (cons stack [f, Nil]))
+apply stack [f, Pair (e, es)] = funcall stack (f:params)
+                                where params = funcParams (Pair (e, es))
+apply _ [_, _] = Left (Error "Second parameter must be a list!")
+apply _ _ = Left (Error "APPLY takes two parameters!")
 
 mapcar::FStack->[SExpr]->Either Error (FStack, SExpr)
 mapcar stack [_, Nil] = Right (stack, Nil)
@@ -337,6 +339,14 @@ maplist stack [f, Pair (e, es)] | correct res && correct results = cons stack [t
 maplist _ [_, _] = Left (Error "Second parameter must be a list!")
 maplist _ _ = Left (Error "MAPLIST takes two parameters!")
 
+--reduceL
+reduce::FStack->[SExpr]->Either Error (FStack, SExpr)
+reduce stack [_, Nil, acc] = Right (stack, acc)
+reduce stack [f, Pair (e, es), acc] | correct res = reduce stack [f, es, takeSExpr res]
+                                    | otherwise = Left (Error "Incorrect parameters!")
+                                    where res = funcall stack [f, acc, e]
+reduce _ [_, _, _] = Left (Error "Second parameter must be a list!")
+reduce _ _ = Left (Error "REDUCE takes three parameters!")
                                                              
 
 car::FStack->[SExpr]->Either Error (FStack, SExpr)
