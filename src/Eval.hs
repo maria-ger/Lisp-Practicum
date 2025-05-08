@@ -15,7 +15,7 @@ import Types (SExpr(Atom, IntNum, FloatNum, Str, Nil, Pair, None),
 import Data.Char (toUpper)
 import GHC.Float (int2Double)
 import GHC.ResponseFile (escapeArgs)
---import Debug.Trace (trace)
+import Debug.Trace (trace)
 import Control.Lens (from)
 
 -- working with the stack of functions
@@ -35,6 +35,7 @@ initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseC
                                 ("<=", (Eval.<=)), (">=", (Eval.>=)),
                                 ("defun", defun), ("setq", setq),
                                 ("apply", apply), ("funcall", funcall),
+                                ("mapcar", mapcar),
                                 ("print", Eval.print)]
 
 addVars::[String]->FStack->FStack
@@ -297,22 +298,36 @@ allAtoms _ = False
 
 apply::FStack->[SExpr]->Either Error (FStack, SExpr)
 apply stack [f, Nil] = evalExpr stack (takeSExpr (cons stack [f, Nil]))
-apply stack [f, Pair (x, xs)] = evalExpr stack (takeSExpr (cons stack [f, Pair (x, xs)]))
+apply stack [f, Pair (e, es)] = funcall stack (f:params)
+                                where params = funcParams (Pair (e, es))
 apply _ [_, _] = Left (Error "Second parameter must be a list!")
 apply _ _ = Left (Error "APPLY takes two parameters!")
 
 funcall::FStack->[SExpr]->Either Error (FStack, SExpr)
 funcall stack (f:es) | allAtoms [f] 
-                       && isUser (atomToString f) stack  = applyUser stack (fst user) (snd user) es
+                       && isUser (atomToString f) stack 
+                       = applyUser stack (fst user) (snd user) (map (\x -> Pair (Atom "QUOTE", Pair (x, Nil))) es)
                      | allAtoms [f] 
-                       && isBase (atomToString f) stack = applyBase stack base es
+                       && isBase (atomToString f) stack 
+                       = applyBase stack base (map (\x -> Pair (Atom "QUOTE", Pair (x, Nil))) es)
                      | allAtoms [f] = Left (Error "No such function!")
-                     | otherwise = evalExpr stack (foldr (\x y -> takeSExpr (cons stack [x, y])) Nil (f:es))
+                     | otherwise = evalExpr 
+                                   stack 
+                                   (foldr (\x y -> takeSExpr (cons stack [x, y])) 
+                                          Nil (f:map (\x -> Pair (Atom "QUOTE", Pair (x, Nil))) es))
                      where user = getUser (atomToString f) stack
                            base = getBase (atomToString f) stack
 funcall _ _ = Left (Error "Incorrect parameters!")
-                           
 
+mapcar::FStack->[SExpr]->Either Error (FStack, SExpr)
+mapcar stack [_, Nil] = Right (stack, Nil)
+mapcar stack [f, Pair (e, es)] | correct res && correct results = cons stack [takeSExpr res, takeSExpr results]
+                               | otherwise = Left (Error "Incorrect parameters!")
+                                 where res = funcall stack [f, e]
+                                       results = mapcar stack [f, es]
+mapcar _ [_, _] = Left (Error "Second parameter must be a list!")
+mapcar _ _ = Left (Error "MAPCAR takes two parameters!")
+                                                             
 
 car::FStack->[SExpr]->Either Error (FStack, SExpr)
 car stack [Pair (x, _)] = Right (stack, x)
