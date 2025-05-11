@@ -31,8 +31,10 @@ initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseC
                                 ("append", append), ("list", list),
                                 ("+", (Eval.+)), ("-", (Eval.-)),
                                 ("*", (Eval.*)), ("/", (Eval./)),
+                                ("%", (Eval.%)), ("=", equal),
                                 ("<", (Eval.<)), (">", (Eval.>)),
                                 ("<=", (Eval.<=)), (">=", (Eval.>=)),
+                                ("not", no), ("and", conj), ("or", disj),
                                 ("defun", defun), ("setq", setq),
                                 ("apply", apply), ("funcall", funcall),
                                 ("mapcar", mapcar), ("maplist", maplist),
@@ -432,6 +434,34 @@ quote::FStack->[SExpr]->Either Error (FStack, SExpr)
 quote stack [x] = Right (stack, x)
 quote _ _ = Left (Error "QUOTE takes one parameter!")
 
+no::FStack->[SExpr]->Either Error (FStack, SExpr)
+no stack [Nil] = Right (stack, Atom "T")
+no stack [_] = Right (stack, Nil)
+no _ _ = Left (Error "NOT takes one parameter!")
+
+conj::FStack->[SExpr]->Either Error (FStack, SExpr)
+conj stack [] = Right (stack, Atom "T")
+conj stack [Nil] = Right (stack, Nil)
+conj stack [e] = Right (stack, e)
+conj stack (Nil : _) = Right (stack, Nil)
+conj stack (_ : es) = conj stack es
+
+disj::FStack->[SExpr]->Either Error (FStack, SExpr)
+disj stack [] = Right (stack, Nil)
+disj stack (Nil : es) = disj stack es
+disj stack (e : _) = Right (stack, e)
+
+
+equal::FStack->[SExpr]->Either Error (FStack, SExpr)
+equal stack [IntNum x, IntNum y] | x == y = Right (stack, Atom "T")
+                               | otherwise = Right (stack, Nil)
+equal stack [IntNum x, FloatNum y] | int2Double x == y = Right (stack, Atom "T")
+                                 | otherwise = Right (stack, Nil)
+equal stack [FloatNum x, IntNum y] | x == int2Double y = Right (stack, Atom "T")
+                                 | otherwise = Right (stack, Nil)
+equal stack [FloatNum x, FloatNum y] | x == y = Right (stack, Atom "T")
+                                   | otherwise = Right (stack, Nil)
+equal _ _ = Left (Error "Incorrect parameters!")
 
 (<)::FStack->[SExpr]->Either Error (FStack, SExpr)
 (<) stack [IntNum x, IntNum y] | x Prelude.< y = Right (stack, Atom "T")
@@ -558,6 +588,19 @@ quote _ _ = Left (Error "QUOTE takes one parameter!")
                                 = (Eval./) stack (FloatNum (dx Prelude./ y) : xs)
                                 where dx = int2Double x
 (/) _ _ = Left (Error "Incorrect parameters!")
+
+(%)::FStack->[SExpr]->Either Error (FStack, SExpr)
+(%) stack [IntNum x, IntNum y] | x Prelude.< 0 && y Prelude.< 0
+                                 = Right (stack, IntNum (x Prelude.- ((-x) `div` (-y) Prelude.+ 1) Prelude.* y))
+                               | x Prelude.< 0 && y Prelude.> 0 
+                                 = Right (stack, IntNum (x Prelude.- ((-x) `div` y Prelude.- 1) Prelude.* y))
+                               | x Prelude.>= 0 && y Prelude.< 0
+                                 = Right (stack, IntNum (x Prelude.- (-(x `div` (-y))) Prelude.* y))
+                               | x Prelude.>= 0 && y Prelude.> 0
+                                 = Right (stack, IntNum (x Prelude.- (x `div` y) Prelude.* y))
+                               | otherwise = Left (Error "Division by zero!")
+(%) _ [_, _] = Left (Error "Incorrect types of parameters (must be integer)!")
+(%) _ _ = Left (Error "Incorrect parameters!")
 
 
 member::FStack->[SExpr]->Either Error (FStack, SExpr)

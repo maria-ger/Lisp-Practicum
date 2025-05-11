@@ -32,7 +32,8 @@ langDef = emptyDef { commentStart = "",
                      identLetter = alphaNum,
                      caseSensitive = False,
                      reservedNames = ["(", ")", " . ", "`", "T", "NIL", 
-                                      "+ ", "- ", "*", "/", ">", "<", ">=", "<="] }
+                                      "+ ", "- ", "*", "/", "%",
+                                      "=", ">", "<", ">=", "<="] }
 
 -- token parser
 lexer :: GenTokenParser String u Identity
@@ -77,6 +78,16 @@ parseDiv::Parser SExpr
 parseDiv = do
     reserved lexer "/"
     return (Atom "/")
+
+parseMod::Parser SExpr
+parseMod = do
+    reserved lexer "%"
+    return (Atom "%")
+
+parseEqual::Parser SExpr
+parseEqual = do
+    reserved lexer "="
+    return (Atom "=")
 
 parseLess::Parser SExpr
 parseLess = do
