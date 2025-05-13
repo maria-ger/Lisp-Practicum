@@ -96,6 +96,7 @@ getTypeIdx _ "выражение" = 0
 getTypeIdx _ "условие" = 1
 getTypeIdx _ "функция" = 2
 getTypeIdx _ "рекурсия" = 3
+getTypeIdx _ "" = 4
 getTypeIdx model _ = chooseType (model^. randomSeed)
 
 
