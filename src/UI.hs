@@ -133,9 +133,10 @@ handleEvent _ _ model evt = case evt of
                     exprs = parseInput $ unpack $ model ^.solution
                     solTags = case exprs of
                                   Left _ -> []
-                                  Right res -> case evalExprs initFStack [] res of
-                                                   Left _ -> []
-                                                   Right _ -> parseResult exprs
+                                  --Right res -> case evalExprs initFStack [] res of
+                                                   --Left _ -> []
+                                                   --Right _ -> parseResult exprs
+                                  Right _ -> parseResult exprs
                     (_, br1, br2) = model ^. task
   AppRun -> [Model $ model & interprete .~ True & input .~ "" & newTask .~ False & result .~ ""]
   AppEval -> [Model $ model & result .~ pack res]

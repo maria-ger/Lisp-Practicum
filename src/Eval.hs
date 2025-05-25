@@ -21,7 +21,7 @@ import Control.Lens (from)
 -- working with the stack of functions
 
 initFStack::FStack
-initFStack = addVars ["S1", "S2", "S3", "S4"] (foldl (\stack func -> Cons (BaseCall func) stack) Empty functions )
+initFStack = addVars ["S1", "S2", "S3", "S4", "X", "N", "L"] (foldl (\stack func -> Cons (BaseCall func) stack) Empty functions )
              where functions = [("car", car), ("cdr", cdr), ("cons", cons),
                                 ("quote", quote), ("eval", eval),
                                 ("cond", cond), ("atom", atom),

@@ -257,6 +257,10 @@ toTag stack (Pair (Atom "DEFUN", p)) = [Symb "(", Symb "DEFUN"] ++ [Func (funcNu
                                        replaceVars stack varnames body ++ [Symb ")"]
                                        where [Atom name, params, body] = funcParams p
                                              varnames = funcParams params
+toTag stack (Pair (Atom "LAMBDA", p)) = [Symb "(", Symb "LAMBDA"] ++ [Symb "("] ++ varList 0 varnames ++ 
+                                       replaceVars stack varnames body ++ [Symb ")"]
+                                       where [_, params, body] = funcParams (Pair (Atom "LAMBDA", p))
+                                             varnames = funcParams params
 toTag stack (Pair (Atom "COND", p)) = [Symb "(", Symb "COND"] ++ condToTag [] stack params ++ [Symb ")"]
                                       where params = funcParams p
 toTag stack (Pair (Atom x, Nil)) | onStack stack x = [Symb "(", Func (funcNum stack x), Symb ")"]
