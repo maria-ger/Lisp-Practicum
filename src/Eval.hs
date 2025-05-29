@@ -31,6 +31,7 @@ initFStack = addVars ["S1", "S2", "S3", "S4", "X", "N", "L"] (foldl (\stack func
                                 ("append", append), ("list", list),
                                 ("+", (Eval.+)), ("-", (Eval.-)),
                                 ("*", (Eval.*)), ("/", (Eval./)),
+                                ("sqrt", Eval.sqrt), ("expt", Eval.expt),
                                 ("%", (Eval.%)), ("=", equal),
                                 ("<", (Eval.<)), (">", (Eval.>)),
                                 ("<=", (Eval.<=)), (">=", (Eval.>=)),
@@ -588,6 +589,25 @@ equal _ _ = Left (Error "Incorrect parameters!")
                                 = (Eval./) stack (FloatNum (dx Prelude./ y) : xs)
                                 where dx = int2Double x
 (/) _ _ = Left (Error "Incorrect parameters!")
+
+sqrt::FStack->[SExpr]->Either Error (FStack, SExpr)
+sqrt stack [IntNum x] | x Prelude.>= 0 = Right (stack, FloatNum (Prelude.sqrt (int2Double x)))
+                      | otherwise = Left (Error "SQRT to negative number!")
+sqrt stack [FloatNum x] | x Prelude.>= 0 = Right (stack, FloatNum (Prelude.sqrt x))
+                        | otherwise = Left (Error "SQRT to negative number!")
+sqrt _ _ = Left (Error "Incorrect parameters!")
+
+expt::FStack->[SExpr]->Either Error (FStack, SExpr)
+expt stack [IntNum x, IntNum y] | y Prelude.> 0 = Right (stack, IntNum (x ^ y))
+                                | y Prelude.< 0 = Right (stack, FloatNum (1 Prelude./ (int2Double x ^ (-y))))
+                                | otherwise = Left (Error "Base can't be equal to zero!")
+expt stack [IntNum x, FloatNum y] | x /= 0 = Right (stack, FloatNum (int2Double x ** y))
+                                  | otherwise = Left (Error "Base can't be equal to zero!")
+expt stack [FloatNum x, IntNum y] | x /= 0 = Right (stack, FloatNum (x ^^ y))
+                                  | otherwise = Left (Error "Base can't be equal to zero!")                                    
+expt stack [FloatNum x, FloatNum y] | x /= 0 = Right (stack, FloatNum (x ** y))
+                                    | otherwise = Left (Error "Base can't be equal to zero!")
+expt _ _ = Left (Error "Incorrect parameters!")
 
 (%)::FStack->[SExpr]->Either Error (FStack, SExpr)
 (%) stack [IntNum x, IntNum y] | x Prelude.< 0 && y Prelude.< 0
