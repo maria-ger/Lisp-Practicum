@@ -46,12 +46,13 @@ chooseSubType seed type_ind = unGen (choose (0, length lst - 1)) (mkQCGen seed) 
 -- (type, graphs)
 -- where graph = (nodes, end of taskgraph, end of graph)
 allTasks::[[([Node], Int, Int)]]
-allTasks = [[(listelemsgraph, 25, 40), (createsexprgraph, 25, 31), (arithmexprgraph, 13, 55),
-             (arithmvecgraph, 12, 67)], 
+allTasks = [[(listelemsgraph, 25, 40), (createsexprgraph, 25, 31), 
+             (arithmexprgraph, 13, 55), (arithmvecgraph, 12, 67)], 
             [(exprtypeLgraph, 6, 39)], 
             [(makelistLgraph, 10, 33), (logicLgraph, 6, 61), (partfuncLgraph, 2, 31), 
              (minmaxLgraph, 4, 59), (absoluteLgraph, 2, 29), (listpropsLgraph, 5, 87)], 
-            [(arithmlistLgraph, 6, 44)], [(ziplistsLgraph, 6, 45)]]
+            [(arithmlistLgraph, 6, 44)], 
+            [(ziplistsLgraph, 6, 45)]]
 
 
 listelemsgraph::[Node]

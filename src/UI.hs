@@ -33,7 +33,8 @@ data AppModel = AppModel {
   _space :: Text,
   _interprete :: Bool,
   _input :: Text,
-  _result :: Text
+  _result :: Text,
+  _manual :: Bool
 } deriving (Eq, Show)
 
 data AppEvent
@@ -45,6 +46,7 @@ data AppEvent
   | AppCheck
   | AppRun
   | AppEval
+  | AppManual
   deriving (Eq, Show)
 
 makeLenses 'AppModel
@@ -60,10 +62,11 @@ buildUI _ model = widgetTree where
          spacer_ [width 10],
          button "Новая задача" AppNewTask,
          button "Интерпретатор" AppRun,
-         button "Справка" AppInit,
+         button "Справка" AppManual,
          button "Выход" AppExit] `styleBasic` [textCenter, padding 50],
          widgetIf (model & _newTask) widget1,
-         widgetIf (model & _interprete) widget2
+         widgetIf (model & _interprete) widget2,
+         widgetIf (model & _manual) widget3
         ] `styleBasic` [padding 5]
     widget1 = vstack_ [childSpacing_ 10] [
               hstack_ [childSpacing_ 5] [
@@ -87,6 +90,9 @@ buildUI _ model = widgetTree where
                 label "Результат:",
                 label_( model^. result) [multiline]
               ]
+    widget3 = zstack [textArea_ space [readOnly_ True],
+                       vscroll (label_ manText [multiline])
+                       `styleBasic` [textTop, paddingT 10, paddingL 10]] 
 
 createLabel::Text -> WidgetNode s e
 createLabel t = label t `styleBasic` []
@@ -96,9 +102,9 @@ getTypeIdx _ "выражение" = 0
 getTypeIdx _ "условие" = 1
 getTypeIdx _ "функция" = 2
 getTypeIdx _ "рекурсия" = 3
-getTypeIdx _ "" = 4
+getTypeIdx _ "функционал" = 4
+getTypeIdx _ "" = 5
 getTypeIdx model _ = chooseType (model^. randomSeed)
-
 
 
 handleEvent
@@ -114,7 +120,8 @@ handleEvent _ _ model evt = case evt of
   AppNewTask -> [Model $ model & newTask .~ True & randomSeed +~ 1
                                & typeTask .~ "Выберите тип задачи:"
                                & taskField .~ False & checked .~ False 
-                               & interprete .~ False]
+                               & interprete .~ False
+                               & manual .~ False]
   AppChooseTask -> [Model $ model & taskField .~ True
                     & graph .~ g
                     & task .~ chosenT & randomSeed +~ 1
@@ -138,7 +145,7 @@ handleEvent _ _ model evt = case evt of
                                                    --Right _ -> parseResult exprs
                                   Right _ -> parseResult exprs
                     (_, br1, br2) = model ^. task
-  AppRun -> [Model $ model & interprete .~ True & input .~ "" & newTask .~ False & result .~ ""]
+  AppRun -> [Model $ model & interprete .~ True & input .~ "" & newTask .~ False & result .~ "" & manual .~ False]
   AppEval -> [Model $ model & result .~ pack res]
              where parsed = parseInput (unpack $ model ^. input)
                    res = case parsed of
@@ -146,7 +153,7 @@ handleEvent _ _ model evt = case evt of
                              Right exprs -> case evalExprs initFStack [] exprs of
                                                  Left (Error err) -> err
                                                  Right results -> printList results
-
+  AppManual -> [Model $ model & manual .~ True & interprete .~ False & input .~ "" & newTask .~ False & result .~ ""]
   
 
 launchUI :: IO ()
@@ -160,7 +167,56 @@ launchUI = do
       appFontDef "Regular" "src/assets/fonts/Roboto-Regular.ttf",
       appInitEvent AppInit
       ]
-    model = AppModel 0 1 False "Выберите тип задачи:" False ([], [], []) "" "" False False ([], 0, 0) "" False "" ""
+    model = AppModel 0 1 False "Выберите тип задачи:" False ([], [], []) "" "" False False ([], 0, 0) "" False "" "" False
 
 
-
+manText::Text
+manText = pack ("Система автоматизированной генерации условий и проверки решений задач по Лиспу.\n\n" ++
+                "Чтобы получить задачу, в меню нажмите на кнопку <<Новая задача>>, затем выберите ее тип и нажмите на <<Получить задачу>>.\n" ++
+                "Затем введите в текстовом поле свое решение и нажмите <<Проверить>>. После проверки решение можно редактировать и проверять заново.\n" ++
+                "Чтобы узнать результат работы программы на Лиспе, в меню перейдите в <<Интерпретатор>>. " ++
+                "В поле ввода наберите текст и нажмите <<Запустить>>. Ниже будет вывод программы.\n" ++ 
+                "Выход из системы доступен по соответсвующей кнопке в меню.\n\n\n" ++
+                "Встроенные функции:\n\n" ++
+                "Базовые:\n" ++
+                "    car\n" ++
+                "    cdr\n" ++
+                "    cons\n" ++
+                "    atom\n" ++
+                "    eq\n" ++
+                "    quote\n" ++
+                "    eval\n" ++
+                "    cond\n" ++
+                "Другие:\n" ++
+                "    defun\n" ++
+                "    lambda\n" ++
+                "    null\n" ++
+                "    eql\n" ++
+                "    =\n" ++
+                "    +\n" ++
+                "    -\n" ++
+                "    *\n" ++
+                "    /\n" ++
+                "    <\n" ++
+                "    >\n" ++
+                "    <=\n" ++
+                "    >=\n" ++
+                "    %\n" ++
+                "    sqrt\n" ++
+                "    expt\n" ++
+                "    not\n" ++
+                "    and\n" ++
+                "    or\n" ++
+                "    numberp\n" ++
+                "    symbolp\n" ++
+                "    listp\n" ++
+                "    member\n" ++
+                "    append\n" ++
+                "    list\n" ++
+                "    setq\n" ++
+                "    apply\n" ++
+                "    funcall\n" ++
+                "    mapcar\n" ++
+                "    maplist\n" ++
+                "    reduce\n" ++
+                "    print\n")
