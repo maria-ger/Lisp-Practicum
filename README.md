@@ -15,6 +15,10 @@ cabal run
 * [monomer](https://hackage.haskell.org/package/monomer)
 * [lens](https://hackage.haskell.org/package/lens)
 * [QuickCheck](https://hackage.haskell.org/package/QuickCheck)
+Для успешного запуска с установкой библиотек может помочь команда:
+```
+cabal run --constraint="sdl2 +pkgconfig" --constraint="sdl2 -recent-ish" --allow-newer=base
+```
 
 
 ## Инструкция
