@@ -70,7 +70,7 @@ buildUI _ model = widgetTree where
         ] `styleBasic` [padding 5]
     widget1 = vstack_ [childSpacing_ 10] [
               hstack_ [childSpacing_ 5] [
-                dropdown typeTask ["случайная задача", "выражение", "условие", "функция", "рекурсия"] createLabel createLabel,
+                dropdown typeTask ["случайная задача", "выражение", "условие", "функция", "рекурсия", "функционал"] createLabel createLabel,
                 button "Получить задачу" AppChooseTask],
               widgetIf (model & _taskField) (vstack_ [childSpacing_ 10] [label "Условие:" `styleBasic` [],
                 zstack [textArea_ space [readOnly_ True],
